@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String      @id @default(uuid())
+  name      String
+  user      String      @unique
+  password  String
+  role      Role
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  electives Electives[]
+
+  @@map("users")
+}
+
+model Electives {
+  id          String       @id @default(uuid())
+  name        String
+  professorId String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  professor   User         @relation(fields: [professorId], references: [id])
+  enrollments Enrollment[]
+
+  @@map("electives")
+}
+
+model Student {
+  id         String      @id @default(uuid())
+  name       String
+  cpf        String      @unique
+  course     String
+  turma      String
+  series     String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  enrollment Enrollment?
+
+  @@map("students")
+}
+
+model Enrollment {
+  id         String    @id @default(uuid())
+  studentId  String    @unique
+  electiveId String
+  grade      Float?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  elective   Electives @relation(fields: [electiveId], references: [id])
+  student    Student   @relation(fields: [studentId], references: [id])
+
+  @@map("enrollments")
+}
+
+enum Role {
+  PROFESSOR
+  ALUNO
+}
