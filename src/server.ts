@@ -17,6 +17,7 @@ import { deleteStudent } from './routes/delete-student';
 import { getStudents } from './routes/get-students';
 import { authenticate } from './middlewares/authenticate';
 import { authorizeRole } from './middlewares/authorize-role';
+import { getProfessors } from './routes/get-professores';
 
 const server = fastify({
   logger: true,
@@ -82,6 +83,13 @@ server.register(getAllEnrollments, {
 });
 //precisa ser protegida
 server.register(createEnrollment, {
+  preHandler: [
+    authenticate,
+    authorizeRole("PROFESSOR"),
+  ],
+});
+
+server.register(getProfessors, {
   preHandler: [
     authenticate,
     authorizeRole("PROFESSOR"),

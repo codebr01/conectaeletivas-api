@@ -8,13 +8,20 @@ export async function getAllElectives(app: FastifyInstance) {
         orderBy: {
           createdAt: "desc",
         },
+
         include: {
-          professor: {
+          professors: {
             select: {
-              id: true,
-              name: true,
+              professor: {
+                select: {
+                  id: true,
+                  name: true,
+                  user: true,
+                },
+              },
             },
           },
+
           _count: {
             select: {
               enrollments: true,
@@ -26,10 +33,17 @@ export async function getAllElectives(app: FastifyInstance) {
       const formattedElectives = electives.map((elective) => ({
         id: elective.id,
         name: elective.name,
-        professorId: elective.professorId,
-        professor_nome: elective.professor.name,
+
+        professores: elective.professors.map((relation) => ({
+          id: relation.professor.id,
+          name: relation.professor.name,
+          user: relation.professor.user,
+        })),
+
         inscritos: elective._count.enrollments,
+
         limite_vagas: 27,
+
         createdAt: elective.createdAt,
         updatedAt: elective.updatedAt,
       }));

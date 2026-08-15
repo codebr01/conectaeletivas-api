@@ -31,19 +31,38 @@ export async function getElectivesByProfessor(app: FastifyInstance) {
       });
     }
 
-    // Busca as eletivas do professor
+    // Busca todas as eletivas nas quais o professor está vinculado
     const electives = await prisma.electives.findMany({
       where: {
-        professorId,
+        professors: {
+          some: {
+            professorId,
+          },
+        },
       },
+
       orderBy: {
         createdAt: "desc",
       },
+
       include: {
+        professors: {
+          include: {
+            professor: {
+              select: {
+                id: true,
+                name: true,
+                user: true,
+              },
+            },
+          },
+        },
+
         enrollments: {
           include: {
             student: true,
           },
+
           orderBy: {
             createdAt: "asc",
           },
@@ -54,16 +73,25 @@ export async function getElectivesByProfessor(app: FastifyInstance) {
     const electivesWithEnrollmentData = electives.map((elective) => ({
       id: elective.id,
       name: elective.name,
-      professorId: elective.professorId,
+
       createdAt: elective.createdAt,
       updatedAt: elective.updatedAt,
 
+      // Todos os professores responsáveis
+      professors: elective.professors.map((relation) => ({
+        id: relation.professor.id,
+        name: relation.professor.name,
+        user: relation.professor.user,
+      })),
+
       limiteVagas: 27,
+
       inscritos: elective.enrollments.length,
 
       students: elective.enrollments.map((enrollment) => ({
         enrollmentId: enrollment.id,
         grade: enrollment.grade,
+
         student: {
           id: enrollment.student.id,
           name: enrollment.student.name,

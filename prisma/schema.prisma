@@ -8,28 +8,44 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(uuid())
-  name      String
-  user      String      @unique
-  password  String
-  role      Role
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  electives Electives[]
+  id         String              @id @default(uuid())
+  name       String
+  user       String              @unique
+  password   String
+  role       Role
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  electives ElectiveProfessor[]
 
   @@map("users")
 }
 
 model Electives {
-  id          String       @id @default(uuid())
+  id          String              @id @default(uuid())
   name        String
-  professorId String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  professor   User         @relation(fields: [professorId], references: [id])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  professors  ElectiveProfessor[]
   enrollments Enrollment[]
 
   @@map("electives")
+}
+
+model ElectiveProfessor {
+  id         String    @id @default(uuid())
+  electiveId String
+  professorId String
+
+  elective   Electives @relation(fields: [electiveId], references: [id], onDelete: Cascade)
+  professor  User      @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([electiveId, professorId])
+
+  @@map("elective_professors")
 }
 
 model Student {
@@ -41,6 +57,7 @@ model Student {
   series     String
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
   enrollment Enrollment?
 
   @@map("students")
@@ -53,6 +70,7 @@ model Enrollment {
   grade      Float?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+
   elective   Electives @relation(fields: [electiveId], references: [id])
   student    Student   @relation(fields: [studentId], references: [id])
 

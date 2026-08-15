@@ -27,11 +27,15 @@ export async function getElectiveById(app: FastifyInstance) {
       },
 
       include: {
-        professor: {
-          select: {
-            id: true,
-            name: true,
-            user: true,
+        professors: {
+          include: {
+            professor: {
+              select: {
+                id: true,
+                name: true,
+                user: true,
+              },
+            },
           },
         },
 
@@ -65,9 +69,15 @@ export async function getElectiveById(app: FastifyInstance) {
       elective: {
         id: elective.id,
         name: elective.name,
-        professorId: elective.professorId,
+
         createdAt: elective.createdAt,
         updatedAt: elective.updatedAt,
+
+        professors: elective.professors.map((relation) => ({
+          id: relation.professor.id,
+          name: relation.professor.name,
+          user: relation.professor.user,
+        })),
 
         limiteVagas: 27,
 
@@ -75,9 +85,7 @@ export async function getElectiveById(app: FastifyInstance) {
 
         students: elective.enrollments.map((enrollment) => ({
           enrollmentId: enrollment.id,
-
           grade: enrollment.grade,
-
           student: enrollment.student,
         })),
       },

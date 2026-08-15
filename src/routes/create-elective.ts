@@ -6,7 +6,9 @@ export async function createElective(app: FastifyInstance) {
   app.post("/electives", async (request, reply) => {
     const createElectiveBodySchema = z.object({
       name: z.string().min(1, "Nome da eletiva é obrigatório"),
-      professorId: z.uuid(),
+      professorIds: z
+        .array(z.uuid())
+        .min(1, "A eletiva deve ter pelo menos um professor"),
     });
 
     const cleanBody = createElectiveBodySchema.safeParse(request.body);
@@ -18,25 +20,38 @@ export async function createElective(app: FastifyInstance) {
       });
     }
 
-    const { name, professorId } = cleanBody.data;
+    const { name, professorIds } = cleanBody.data;
 
-    // Verifica se o professor existe
-    const professorExists = await prisma.user.findUnique({
+    // Remove IDs duplicados
+    const uniqueProfessorIds = [...new Set(professorIds)];
+
+    // Verifica se todos os professores existem
+    const professors = await prisma.user.findMany({
       where: {
-        id: professorId,
+        id: {
+          in: uniqueProfessorIds,
+        },
+        role: "PROFESSOR",
+      },
+      select: {
+        id: true,
+        name: true,
       },
     });
 
-    if (!professorExists) {
+    if (professors.length !== uniqueProfessorIds.length) {
       return reply.status(404).send({
-        message: "Professor not found",
+        message: "One or more professors not found",
       });
     }
 
     // Verifica se já existe uma eletiva com esse nome
     const electiveExists = await prisma.electives.findFirst({
       where: {
-        name,
+        name: {
+          equals: name,
+          mode: "insensitive",
+        },
       },
     });
 
@@ -46,11 +61,32 @@ export async function createElective(app: FastifyInstance) {
       });
     }
 
-    // Cria a eletiva
+    // Cria a eletiva e os vínculos com os professores
     const newElective = await prisma.electives.create({
       data: {
         name,
-        professorId,
+        professors: {
+          create: uniqueProfessorIds.map((professorId) => ({
+            professor: {
+              connect: {
+                id: professorId,
+              },
+            },
+          })),
+        },
+      },
+      include: {
+        professors: {
+          include: {
+            professor: {
+              select: {
+                id: true,
+                name: true,
+                user: true,
+              },
+            },
+          },
+        },
       },
     });
 

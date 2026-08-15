@@ -26,13 +26,16 @@ export async function getAllEnrollments(app: FastifyInstance) {
             select: {
               id: true,
               name: true,
-              professorId: true,
 
-              professor: {
+              professors: {
                 select: {
-                  id: true,
-                  name: true,
-                  user: true,
+                  professor: {
+                    select: {
+                      id: true,
+                      name: true,
+                      user: true,
+                    },
+                  },
                 },
               },
             },
@@ -56,8 +59,14 @@ export async function getAllEnrollments(app: FastifyInstance) {
 
           alunoId: enrollment.student.id,
 
-          professor: enrollment.elective.professor.name,
-          professorId: enrollment.elective.professorId,
+          // Todos os professores da eletiva
+          professores: enrollment.elective.professors.map(
+            (relation) => ({
+              id: relation.professor.id,
+              name: relation.professor.name,
+              user: relation.professor.user,
+            })
+          ),
 
           createdAt: enrollment.createdAt,
           updatedAt: enrollment.updatedAt,
