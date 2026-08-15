@@ -12,10 +12,18 @@ export async function getStudents(app: FastifyInstance) {
           enrollment: {
             include: {
               elective: {
-                select: {
-                  id: true,
-                  name: true,
-                  professorId: true,
+                include: {
+                  professors: {
+                    include: {
+                      professor: {
+                        select: {
+                          id: true,
+                          name: true,
+                          user: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
