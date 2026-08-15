@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:16
     container_name: conecta_eletivas_postgres
-    restart: unless-stopped
+    restart: always
 
     environment:
       POSTGRES_DB: conecta_eletivas_bd
@@ -14,12 +14,6 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U conecta_eletivas_bd_user -d conecta_eletivas_bd"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 volumes:
   postgres_data:
